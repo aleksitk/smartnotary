@@ -9,14 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "ethers": "^6.13.2",
+    "@web3auth/auth-adapter": "^9.7.0",
+    "@web3auth/base": "^9.7.0",
+    "@web3auth/ethereum-provider": "^9.7.0",
+    "@web3auth/modal": "^9.7.0",
     "crypto-js": "^4.2.0",
     "eth-crypto": "^2.6.0",
+    "ethers": "^6.13.2",
     "pinata-web3": "^0.5.2",
-    "@web3auth/modal": "^8.12.4",
-    "@web3auth/ethereum-provider": "^8.12.4"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
@@ -25,6 +27,7 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vite-plugin-node-polyfills": "^0.25.0"
   }
 }
