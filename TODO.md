@@ -84,7 +84,7 @@
   - Implement encryption before upload
     - **ECIES** or **AES**
 
-- [ ] **IPFS Integration**
+- [X] **IPFS Integration**
   - Use **Pinata SDK**
   - Upload encrypted files
   - Retrieve the **CID**

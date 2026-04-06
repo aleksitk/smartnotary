@@ -3,6 +3,7 @@ import { Web3Auth } from "@web3auth/modal";
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import CryptoJS from "crypto-js";
+import { PinataSDK } from "pinata-web3";
 
 function App() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -11,7 +12,13 @@ function App() {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [fileHash, setFileHash] = useState("");
+  const [cid, setCid] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
+  const pinata = new PinataSDK({
+  pinataJwt: import.meta.env.VITE_PINATA_JWT,
+  pinataGateway: "gateway.pinata.cloud",
+  });
 
   useEffect(() => {
     const init = async () => {
@@ -94,7 +101,38 @@ function App() {
   reader.readAsArrayBuffer(uploadedFile);
   
   };
-  // ... (UI ნაწილი იგივე რჩება)
+const handleNotarization = async () => {
+  if (!file) return;
+
+  try {
+    setIsUploading(true);
+    console.log("IPFS-ზე ატვირთვა დაიწყო...");
+
+    // ფაილის ატვირთვა
+    const upload = await pinata.upload.file(file);
+    
+    // 1. დავლოგოთ მთლიანი პასუხი, რომ ვნახოთ რა გვერქვა "CID"-ს
+    console.log("Pinata Full Response:", upload);
+
+    // 2. ვცადოთ ყველა შესაძლო სახელი (IpfsHash არის ყველაზე გავრცელებული Pinata-ში)
+    const finalCid = upload.cid || upload.IpfsHash || upload.ipfs_pin_hash;
+    
+    if (finalCid) {
+      console.log("ნაპოვნი CID:", finalCid);
+      setCid(finalCid);
+      alert("ფაილი წარმატებით აიტვირთა IPFS-ზე! \nCID: " + finalCid);
+    } else {
+      console.error("CID ვერ მოიძებნა პასუხში. ნახე კონსოლი!");
+      alert("ატვირთვა მოხდა, მაგრამ CID-ის ამოღება ვერ მოხერხდა.");
+    }
+    
+    setIsUploading(false);
+  } catch (error) {
+    console.error("IPFS Upload Error:", error);
+    setIsUploading(false);
+    alert("ატვირთვა ვერ მოხერხდა. შეამოწმე კონსოლი.");
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 font-sans">
       <header className="max-w-4xl mx-auto mb-12 flex justify-between items-center border-b border-gray-800 pb-6">
@@ -175,13 +213,15 @@ function App() {
               )}
             </label>
           </div>
-
           {file && user && (
-            <button className="w-full mt-10 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 text-lg">
-              🚀 Finalize & Notarize on Polygon
+            <button 
+              onClick={handleNotarization}
+              disabled={isUploading}
+              className={`w-full mt-10 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 text-lg ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-500 hover:to-blue-700'}`}
+            >
+              {isUploading ? "Uploading to IPFS..." : "🚀 Finalize & Notarize on Polygon"}
             </button>
           )}
-          
           {file && !user && (
             <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-xl text-yellow-500 text-center">
                Please **Login** to sign this document on the blockchain.
