@@ -108,7 +108,7 @@
   - Add **notifications**
   - Show **"Mining Transaction" status**
 
-- [ ] **Verification Tool**
+- [X] **Verification Tool**
   - Create page to:
     - Upload file
     - Generate hash
