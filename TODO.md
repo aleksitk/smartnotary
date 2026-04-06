@@ -103,7 +103,7 @@
 - [X] **Upload Component**
   - Implement **Drag-and-Drop** document upload
 
-- [ ] **Blockchain Transaction Feedback**
+- [X] **Blockchain Transaction Feedback**
   - Add **loaders**
   - Add **notifications**
   - Show **"Mining Transaction" status**

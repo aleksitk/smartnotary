@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Web3Auth } from "@web3auth/modal";
+import { ethers } from "ethers"; 
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import CryptoJS from "crypto-js";
 import { PinataSDK } from "pinata-web3";
+import { contractAddress, contractABI } from "./contractInfo";
+
 
 function App() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -69,6 +72,11 @@ function App() {
     if (!web3auth) return;
     try {
       await web3auth.connect();
+      const ethersProvider = new ethers.BrowserProvider(web3authProvider);
+      const signer = await ethersProvider.getSigner();
+      const userAddress = await signer.getAddress();
+      console.log("შენი მისამართია:", userAddress);
+      setAddress(userAddress); 
       const userInfo = await web3auth.getUserInfo();
       setUser(userInfo);
     } catch (error) {
@@ -102,35 +110,49 @@ function App() {
   
   };
 const handleNotarization = async () => {
-  if (!file) return;
-
-  try {
-    setIsUploading(true);
-    console.log("IPFS-ზე ატვირთვა დაიწყო...");
-
-    // ფაილის ატვირთვა
-    const upload = await pinata.upload.file(file);
-    
-    // 1. დავლოგოთ მთლიანი პასუხი, რომ ვნახოთ რა გვერქვა "CID"-ს
-    console.log("Pinata Full Response:", upload);
-
-    // 2. ვცადოთ ყველა შესაძლო სახელი (IpfsHash არის ყველაზე გავრცელებული Pinata-ში)
-    const finalCid = upload.cid || upload.IpfsHash || upload.ipfs_pin_hash;
-    
-    if (finalCid) {
-      console.log("ნაპოვნი CID:", finalCid);
-      setCid(finalCid);
-      alert("ფაილი წარმატებით აიტვირთა IPFS-ზე! \nCID: " + finalCid);
-    } else {
-      console.error("CID ვერ მოიძებნა პასუხში. ნახე კონსოლი!");
-      alert("ატვირთვა მოხდა, მაგრამ CID-ის ამოღება ვერ მოხერხდა.");
+    if (!file || !fileHash) {
+      alert("გთხოვთ ჯერ აირჩიოთ ფაილი ჰეშის დასათვლელად.");
+      return;
     }
-    
-    setIsUploading(false);
-  } catch (error) {
-    console.error("IPFS Upload Error:", error);
-    setIsUploading(false);
-    alert("ატვირთვა ვერ მოხერხდა. შეამოწმე კონსოლი.");
+
+    try {
+      setIsUploading(true);
+      console.log("1. IPFS-ზე ატვირთვა დაიწყო...");
+
+      // ატვირთვა Pinata-ზე
+      const upload = await pinata.upload.file(file);
+      const finalCid = upload.cid || upload.IpfsHash;
+      setCid(finalCid);
+      console.log("2. IPFS ატვირთვა დასრულდა. CID:", finalCid);
+
+      // --- ბლოკჩეინთან დაკავშირება ---
+      console.log("3. ბლოკჩეინზე ტრანზაქციის მომზადება...");
+      
+      // ვიღებთ პროვაიდერს Web3Auth-იდან
+      const ethersProvider = new ethers.BrowserProvider(web3auth.provider);
+      // ვიღებთ "ხელმომწერს" (Signer)
+      const signer = await ethersProvider.getSigner();
+      
+      // ვქმნით კონტრაქტის ობიექტს
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      // ვიძახებთ კონტრაქტის ფუნქციას
+      console.log("4. ტრანზაქციის გაგზავნა...");
+      const tx = await contract.notarize(fileHash, finalCid);
+      
+      console.log("5. ტრანზაქცია გაიგზავნა! ჰეში:", tx.hash);
+      
+      // ველოდებით ბლოკჩეინისგან დადასტურებას
+      await tx.wait();
+      
+      console.log("6. ტრანზაქცია დადასტურდა!");
+      alert("✅ დოკუმენტი წარმატებით დამოწმდა ბლოკჩეინზე!");
+      
+      setIsUploading(false);
+    } catch (error) {
+      console.error("Notarization Error:", error);
+      setIsUploading(false);
+      alert("შეცდომა პროცესის დროს. ნახე კონსოლი დეტალებისთვის.");
     }
   };
   return (
