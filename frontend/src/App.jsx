@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Web3Auth } from "@web3auth/modal";
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
+import CryptoJS from "crypto-js";
 
 function App() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -9,6 +10,8 @@ function App() {
   const [isReady, setIsReady] = useState(false);
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileHash, setFileHash] = useState("");
+
 
   useEffect(() => {
     const init = async () => {
@@ -72,6 +75,25 @@ function App() {
     setUser(null);
   };
 
+
+  const calculateHash = (uploadedFile) => {
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    // ფაილის ბიტების წაკითხვა
+    const arrayBuffer = e.target.result;
+    // კონვერტაცია ბიბლიოთეკისთვის გასაგებ ფორმატში
+    const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+    // ჰეშის გამოთვლა
+    const hash = CryptoJS.SHA256(wordArray).toString();
+    
+    setFileHash(hash);
+    console.log("Generated Hash:", hash);
+  };
+
+  reader.readAsArrayBuffer(uploadedFile);
+  
+  };
   // ... (UI ნაწილი იგივე რჩება)
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 font-sans">
@@ -105,7 +127,12 @@ function App() {
             onDrop={(e) => {
               e.preventDefault();
               setIsDragging(false);
-              if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+              if (e.dataTransfer.files[0]) {
+                const selectedFile = e.dataTransfer.files[0];
+                setFile(selectedFile);
+                calculateHash(selectedFile);
+              }
+
             }}
             className={`border-4 border-dashed rounded-3xl p-20 text-center cursor-pointer transition-all duration-300 ${
               isDragging ? 'border-blue-500 bg-blue-500/20 scale-105' : 'border-gray-700 hover:border-blue-500/50'
@@ -115,13 +142,28 @@ function App() {
                 type="file" 
                 id="file-upload" 
                 className="hidden" 
-                onChange={(e) => e.target.files[0] && setFile(e.target.files[0])} 
+                onChange={(e) => 
+                  {
+                    const selectedFile = e.target.files[0];
+                      if (selectedFile) {
+                        setFile(selectedFile);
+                        calculateHash(selectedFile);
+                      }
+                  }}
             />
             <label htmlFor="file-upload" className="cursor-pointer">
               {file ? (
                 <div className="animate-pulse">
                   <p className="text-6xl mb-4">📄</p>
                   <p className="text-xl font-bold text-green-400">{file.name}</p>
+                    {fileHash && (
+                      <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <p className="text-[10px] text-blue-400 font-mono break-all leading-tight">
+                          <span className="font-bold text-white block mb-1">SHA-256 FINGERPRINT:</span> 
+                          {fileHash}
+                        </p>
+                      </div>
+                    )}
                   <p className="text-gray-500 mt-2">Ready to notarize</p>
                 </div>
               ) : (

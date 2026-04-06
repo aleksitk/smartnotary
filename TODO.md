@@ -29,7 +29,7 @@
 
 - [X] **Develop `SmartNotary.sol`**
 
-  - [ ] Create a `Document` struct
+  - [X] Create a `Document` struct
     - Hash
     - CID
     - Owner
@@ -55,27 +55,27 @@
 
 # 🔐 Phase 3: Identity & MPC Integration (Web3Auth)
 
-- [ ] **SDK Integration**
+- [X] **SDK Integration**
   - Install and configure **Web3Auth SDK** in the frontend
 
-- [ ] **Authentication Flow**
+- [X] **Authentication Flow**
   - Implement **Social Login**
     - Google
     - Email
   - Generate an **MPC wallet**
 
-- [ ] **Provider Setup**
+- [X] **Provider Setup**
   - Connect **Web3Auth provider → Ethers.js**
   - Enable blockchain interactions
 
-- [ ] **Session Management**
+- [X] **Session Management**
   - Ensure user stays logged in after page refresh
 
 ---
 
 # 📦 Phase 4: File Handling & IPFS Storage
 
-- [ ] **Client-Side Hashing**
+- [X] **Client-Side Hashing**
   - Implement **SHA-256 hashing**
   - Use `crypto-js`
   - Ensure hashing happens **locally**
@@ -97,10 +97,10 @@
 
 # 💻 Phase 5: Frontend Development (React/UI)
 
-- [ ] **Dashboard UI**
+- [X] **Dashboard UI**
   - Build interface using **Tailwind CSS**
 
-- [ ] **Upload Component**
+- [X] **Upload Component**
   - Implement **Drag-and-Drop** document upload
 
 - [ ] **Blockchain Transaction Feedback**
