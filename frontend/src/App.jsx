@@ -10,6 +10,7 @@ import { contractAddress, contractABI } from "./contractInfo";
 
 function App() {
   const [web3auth, setWeb3auth] = useState(null);
+  const [address, setAddress] = useState(""); 
   const [user, setUser] = useState(null);
   const [isReady, setIsReady] = useState(false);
   const [file, setFile] = useState(null);
@@ -54,13 +55,16 @@ function App() {
           privateKeyProvider,
         });
 
-
-        // ინიციალიზაცია
         await web3authInstance.initModal();
         setWeb3auth(web3authInstance);
         setIsReady(true);
 
         if (web3authInstance.connected) {
+          const ethersProvider = new ethers.BrowserProvider(web3authInstance.provider);
+          const signer = await ethersProvider.getSigner();
+          const userAddress = await signer.getAddress();
+          setAddress(userAddress); // ვინახავთ მისამართს State-ში
+          
           const userInfo = await web3authInstance.getUserInfo();
           setUser(userInfo);
         }
@@ -74,12 +78,21 @@ function App() {
   const login = async () => {
     if (!web3auth) return;
     try {
-      await web3auth.connect();
+      const web3authProvider = await web3auth.connect(); // ვიღებთ პროვაიდერს
+      
+      // 👇 მისამართის ამოღება შესვლისას
       const ethersProvider = new ethers.BrowserProvider(web3authProvider);
       const signer = await ethersProvider.getSigner();
       const userAddress = await signer.getAddress();
-      console.log("შენი მისამართია:", userAddress);
-      setAddress(userAddress); 
+      setAddress(userAddress);
+      
+       // ვთხოვთ ჩვენს სერვერს POL-ის გადმორიცხვას
+      await fetch("http://localhost:3001/fund", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userAddress })
+      });
+      
       const userInfo = await web3auth.getUserInfo();
       setUser(userInfo);
     } catch (error) {
@@ -189,7 +202,8 @@ function App() {
       alert("შეცდომა პროცესის დროს. ნახე კონსოლი დეტალებისთვის.");
     }
   };
-return (
+
+  return (
   <div className="min-h-screen bg-gray-900 text-white p-8 font-sans">
     {/* HEADER */}
     <header className="max-w-4xl mx-auto mb-8 flex justify-between items-center border-b border-gray-800 pb-6">
@@ -231,113 +245,108 @@ return (
       </button>
     </div>
 
-    <main className="max-w-4xl mx-auto">
-      <div className="bg-gray-800 rounded-3xl p-10 border border-gray-700 shadow-2xl">
-        <h2 className="text-2xl mb-8 font-semibold text-center">
-          {mode === "notarize" ? "Notarize New Document" : "Verify Document Integrity"}
-        </h2>
-        
-        {/* DRAG & DROP AREA */}
-        <div
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            if (e.dataTransfer.files[0]) {
-              const selectedFile = e.dataTransfer.files[0];
-              setFile(selectedFile);
-              calculateHash(selectedFile);
-            }
-          }}
-          className={`border-4 border-dashed rounded-3xl p-16 text-center cursor-pointer transition-all duration-300 ${
-            isDragging ? 'border-blue-500 bg-blue-500/20 scale-102' : 'border-gray-700 hover:border-blue-500/30'
-          }`}
-        >
-          <input 
-              type="file" 
-              id="file-upload" 
-              className="hidden" 
-              onChange={(e) => {
-                if (e.target.files[0]) {
-                  setFile(e.target.files[0]);
-                  calculateHash(e.target.files[0]);
-                }
-              }} 
-          />
-          <label htmlFor="file-upload" className="cursor-pointer">
-            {file ? (
-              <div>
-                <p className="text-6xl mb-4">📄</p>
-                <p className="text-xl font-bold text-green-400">{file.name}</p>
-                {fileHash && (
-                  <div className="mt-4 p-3 bg-gray-900/50 border border-gray-700 rounded-lg">
-                    <p className="text-[10px] text-blue-400 font-mono break-all leading-tight">
-                      <span className="font-bold text-gray-500 block mb-1 uppercase">SHA-256 Fingerprint:</span> 
-                      {fileHash}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-gray-500">
-                <p className="text-6xl mb-4 opacity-20">📤</p>
-                <p className="text-lg">Drag your document here</p>
-                <p className="text-sm italic mt-2">or click to select manually</p>
-              </div>
-            )}
-          </label>
-        </div>
+<main className="max-w-4xl mx-auto">
+  <div className="bg-gray-800 rounded-3xl p-10 border border-gray-700 shadow-2xl">
+    
+    {/* --- სათაური, რომელიც რეჟიმის მიხედვით იცვლება --- */}
+    <h2 className="text-2xl mb-8 font-semibold text-center">
+      {mode === "notarize" && "Notarize New Document"}
+      {mode === "verify" && "Verify Document Integrity"}
+    </h2>
 
-        {/* VERIFICATION RESULTS (ჩნდება მხოლოდ შემოწმებისას) */}
-        {verifiedDoc && verifiedDoc !== "not_found" && (
-          <div className="mt-8 p-6 bg-green-500/10 border border-green-500/50 rounded-2xl animate-in fade-in duration-500">
-            <h3 className="text-green-400 font-bold mb-3 flex items-center gap-2 text-lg">
-              <span>✅ Verified! This document is authentic.</span>
-            </h3>
-            <div className="space-y-2 text-sm text-gray-300">
-              <p><b>Timestamp:</b> {new Date(verifiedDoc.timestamp * 1000).toLocaleString()}</p>
-              <p className="break-all"><b>Notarized By:</b> {verifiedDoc.owner}</p>
-              <a 
-                href={`https://gateway.pinata.cloud/ipfs/${verifiedDoc.cid}`} 
-                target="_blank" 
-                rel="noreferrer"
-                className="inline-block bg-green-600/20 text-green-400 px-4 py-2 rounded-lg mt-2 hover:bg-green-600/30 transition-all border border-green-500/30"
-              >
-                👁️ View original file on IPFS
-              </a>
+    {/* --- 1. ნაწილი: Drag & Drop ზონა (ჩანს მხოლოდ Notarize და Verify რეჟიმში) --- */}
+    {(
+      <div
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          if (e.dataTransfer.files[0]) {
+            setFile(e.dataTransfer.files[0]);
+            calculateHash(e.dataTransfer.files[0]);
+          }
+        }}
+        className={`border-4 border-dashed rounded-3xl p-16 text-center cursor-pointer transition-all duration-300 ${
+          isDragging ? 'border-blue-500 bg-blue-500/20 scale-102' : 'border-gray-700 hover:border-blue-500/30'
+        }`}
+      >
+        <input 
+            type="file" 
+            id="file-upload" 
+            className="hidden" 
+            onChange={(e) => {
+              if (e.target.files[0]) {
+                setFile(e.target.files[0]);
+                calculateHash(e.target.files[0]);
+              }
+            }} 
+        />
+        <label htmlFor="file-upload" className="cursor-pointer">
+          {file ? (
+            <div>
+              <p className="text-6xl mb-4">📄</p>
+              <p className="text-xl font-bold text-green-400">{file.name}</p>
+              {fileHash && (
+                <div className="mt-4 p-3 bg-gray-900/50 border border-gray-700 rounded-lg text-left">
+                  <p className="text-[10px] text-blue-400 font-mono break-all leading-tight">
+                    <span className="font-bold text-gray-500 block mb-1 uppercase">SHA-256 Fingerprint:</span> 
+                    {fileHash}
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-
-        {verifiedDoc === "not_found" && (
-          <div className="mt-8 p-6 bg-red-500/10 border border-red-500/50 rounded-2xl animate-pulse">
-            <h3 className="text-red-400 font-bold text-lg">❌ Document Not Found!</h3>
-            <p className="text-sm text-gray-400 mt-1">This specific version of the file has never been notarized on our system.</p>
-          </div>
-        )}
-
-        {/* MAIN ACTION BUTTON */}
-        {file && user && (
-          <button 
-            onClick={mode === "notarize" ? handleNotarization : handleVerification}
-            disabled={isUploading}
-            className={`w-full mt-10 text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 text-lg ${
-              isUploading ? 'bg-gray-700 cursor-not-allowed' : 
-              mode === "notarize" ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'
-            }`}
-          >
-            {isUploading ? "Processing..." : mode === "notarize" ? "🚀 Finalize & Notarize on Polygon" : "🔍 Check Authenticity"}
-          </button>
-        )}
-
-        {file && !user && (
-          <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-xl text-yellow-500 text-center text-sm">
-             ⚠️ Please **Login** to interact with the blockchain.
-          </div>
-        )}
+          ) : (
+            <div className="text-gray-500">
+              <p className="text-6xl mb-4 opacity-20">📤</p>
+              <p className="text-lg">Drag your document here</p>
+              <p className="text-sm italic mt-2">or click to select manually</p>
+            </div>
+          )}
+        </label>
       </div>
-    </main>
+    )}
+
+    {/* --- 2. ნაწილი: VERIFICATION RESULTS (ჩანს მხოლოდ შემოწმებისას) --- */}
+    {mode === "verify" && verifiedDoc && verifiedDoc !== "not_found" && (
+      <div className="mt-8 p-6 bg-green-500/10 border border-green-500/50 rounded-2xl animate-in fade-in duration-500">
+        <h3 className="text-green-400 font-bold mb-3 flex items-center gap-2 text-lg">
+          <span>✅ Verified! This document is authentic.</span>
+        </h3>
+        <div className="space-y-2 text-sm text-gray-300">
+          <p><b>Timestamp:</b> {new Date(verifiedDoc.timestamp * 1000).toLocaleString()}</p>
+          <p className="break-all"><b>Notarized By:</b> {verifiedDoc.owner}</p>
+          <a href={`https://gateway.pinata.cloud/ipfs/${verifiedDoc.cid}`} target="_blank" rel="noreferrer" className="inline-block bg-green-600/20 text-green-400 px-4 py-2 rounded-lg mt-2 hover:bg-green-600/30 transition-all border border-green-500/30">
+            👁️ View original file on IPFS
+          </a>
+        </div>
+      </div>
+    )}
+
+    {mode === "verify" && verifiedDoc === "not_found" && (
+      <div className="mt-8 p-6 bg-red-500/10 border border-red-500/50 rounded-2xl">
+        <h3 className="text-red-400 font-bold text-lg">❌ Document Not Found!</h3>
+      </div>
+    )}
+
+
+
+    {/* --- 4. ნაწილი: MAIN ACTION BUTTON (არ ჩანს ისტორიის რეჟიმში) --- */}
+    { file && user && (
+      <button 
+        onClick={mode === "notarize" ? handleNotarization : handleVerification}
+        disabled={isUploading}
+        className={`w-full mt-10 text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 text-lg ${
+          isUploading ? 'bg-gray-700 cursor-not-allowed' : 
+          mode === "notarize" ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'
+        }`}
+      >
+        {isUploading ? "Processing..." : mode === "notarize" ? "⚡ Finalize & Notarize on Polygon" : "🔍 Check Authenticity"}
+      </button>
+    )}
+
+  </div>
+</main>
   </div>
 );
 }

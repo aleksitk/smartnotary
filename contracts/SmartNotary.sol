@@ -11,9 +11,13 @@ contract SmartNotary {
 
     mapping(string => Document) private documents;
 
+    event DocumentNotarized(string indexed fileHash, string ipfsCID, address indexed owner, uint256 timestamp);
+
     function notarize(string memory _fileHash, string memory _ipfsCID) public {
         require(documents[_fileHash].timestamp == 0, "Already notarized");
         documents[_fileHash] = Document(_fileHash, _ipfsCID, msg.sender, block.timestamp);
+        
+        emit DocumentNotarized(_fileHash, _ipfsCID, msg.sender, block.timestamp);
     }
 
     function getDocument(string memory _fileHash) public view returns (string memory, string memory, address, uint256) {

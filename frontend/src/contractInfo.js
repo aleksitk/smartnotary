@@ -1,8 +1,17 @@
-// შენი სმარტ-კონტრაქტის მისამართი (Polygon Amoy-ზე)
-export const contractAddress = "0x0cCA3FE231D09D2c0A0B1e7ba4429E68c9Cb2f8f";
+export const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
-// ABI არის "თარჯიმანი", რომელიც ეუბნება JavaScript-ს, თუ რა ფუნქციები აქვს კონტრაქტს
 export const contractABI = [
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "string", "name": "fileHash", "type": "string" },
+      { "indexed": false, "internalType": "string", "name": "ipfsCID", "type": "string" },
+      { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "DocumentNotarized",
+    "type": "event"
+  },
   {
     "inputs": [
       { "internalType": "string", "name": "_fileHash", "type": "string" },
