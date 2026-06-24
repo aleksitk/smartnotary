@@ -14,23 +14,32 @@ app.post("/fund", async (req, res) => {
     const { userAddress } = req.body;
 
     try {
-        // ვამოწმებთ ბალანსს, რომ ტყუილად არ ვფანტოთ POL
         const balance = await provider.getBalance(userAddress);
-        if (balance > ethers.parseEther("0.1")) {
-            return res.json({ success: true, message: "Already funded with enough gas" });
+        
+        // ჩვენი მიზანია მომხმარებელს ჰქონდეს მინიმუმ 0.12 POL (უსაფრთხოების რეზერვით)
+        const targetBalance = ethers.parseEther("0.12"); 
+
+        if (balance < ethers.parseEther("0.08")) {
+            // ვიანგარიშებთ ზუსტ სხვაობას: რა აკლია მიზნობრივ ბალანსამდე
+            const amountToSend = targetBalance - balance;
+            
+            console.log(`User ${userAddress} needs gas.`);
+            console.log(`Current: ${ethers.formatEther(balance)} POL. Sending difference: ${ethers.formatEther(amountToSend)} POL`);
+
+            const tx = await masterWallet.sendTransaction({
+                to: userAddress,
+                value: amountToSend
+            });
+
+            await tx.wait();
+            console.log("Transaction confirmed!");
+            return res.json({ success: true, message: `Topped up by ${ethers.formatEther(amountToSend)} POL` });
+        } else {
+            console.log(`User ${userAddress} already has enough gas: ${ethers.formatEther(balance)} POL`);
+            return res.json({ success: true, message: "Balance is sufficient" });
         }
-
-        console.log(`Sending gas to: ${userAddress}`);
-        const tx = await masterWallet.sendTransaction({
-            to: userAddress,
-            value: ethers.parseEther("0.1") // ვუგზავნით 0.1 POL-ს 
-        });
-
-
-        await tx.wait();
-        res.json({ success: true, txHash: tx.hash });
     } catch (error) {
-        console.error(error);
+        console.error("Funding Error:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
