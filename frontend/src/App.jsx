@@ -20,7 +20,7 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [mode, setMode] = useState("notarize"); // "notarize" ან "verify"
   const [verifiedDoc, setVerifiedDoc] = useState(null); // შემოწმების შედეგისთვის
-
+  const [balance, setBalance] = useState("");
 
   const pinata = new PinataSDK({
   pinataJwt: import.meta.env.VITE_PINATA_JWT,
@@ -85,12 +85,13 @@ function App() {
       const signer = await ethersProvider.getSigner();
       const userAddress = await signer.getAddress();
       setAddress(userAddress);
-      
+      const userBalance = await ethersProvider.getBalance(userAddress);
+      setBalance(ethers.formatEther(userBalance)); 
        // ვთხოვთ ჩვენს სერვერს POL-ის გადმორიცხვას
-      await fetch("http://localhost:3001/fund", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userAddress })
+      await fetch("https://smartnotary.onrender.com/fund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userAddress })
       });
       
       const userInfo = await web3auth.getUserInfo();
@@ -223,6 +224,8 @@ function App() {
         ) : (
           <div className="flex flex-col items-end gap-1 bg-gray-800 p-2 px-4 rounded-2xl border border-gray-700">
             <span className="text-gray-300 text-sm">Welcome, <b className="text-white">{user.name || "User"}</b></span>
+           <p className="text-[10px] text-green-400 font-bold">Balance: {balance} POL</p>
+
             <button onClick={logout} className="text-red-400 text-[10px] font-bold uppercase hover:text-red-300">Logout</button>
           </div>
         )}
