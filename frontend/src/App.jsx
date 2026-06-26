@@ -7,6 +7,17 @@ import CryptoJS from "crypto-js";
 import { PinataSDK } from "pinata-web3";
 import { contractAddress, contractABI } from "./contractInfo";
 
+// სანოტარო ბლომბის ნიშანი — ლოგოში, drop-zone-ში და შედეგებში
+function Seal({ size = 44, tone = "gold" }) {
+  const stroke = tone === "teal" ? "#45B8A4" : tone === "red" ? "#E06257" : "#C9974C";
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="46" stroke={stroke} strokeWidth="1.5" strokeDasharray="2 4" />
+      <circle cx="50" cy="50" r="36" stroke={stroke} strokeWidth="2" />
+      <path d="M34 50 L46 62 L68 38" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function App() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -207,148 +218,160 @@ function App() {
   };
 
   return (
-  <div className="min-h-screen bg-gray-900 text-white p-8 font-sans">
-    {/* HEADER */}
-    <header className="max-w-4xl mx-auto mb-8 flex justify-between items-center border-b border-gray-800 pb-6">
-      <div className="text-left">
-        <h1 className="text-3xl font-bold text-blue-500 italic">SmartNotary</h1>
-        <p className="text-gray-500 text-xs mt-1">Blockchain Verification System</p>
-      </div>
-      <div>
-        {!user ? (
-          <button 
-            onClick={login} 
-            disabled={!isReady}
-            className="bg-blue-600 hover:bg-blue-700 px-8 py-2 rounded-xl font-bold disabled:bg-gray-700 transition-all shadow-lg"
-          >
-            {!isReady ? "Booting..." : "Login"}
-          </button>
-        ) : (
-          <div className="flex flex-col items-end gap-1 bg-gray-800 p-2 px-4 rounded-2xl border border-gray-700">
-            <span className="text-gray-300 text-sm">Welcome, <b className="text-white">{user.name || "User"}</b></span>
-           <p className="text-[10px] text-green-400 font-bold">Balance: {balance} POL</p>
-            <button onClick={logout} className="text-red-400 text-[10px] font-bold uppercase hover:text-red-300">Logout</button>
+    <div className="min-h-screen bg-ink text-paper p-8 font-sans">
+
+      {/* HEADER */}
+      <header className="max-w-4xl mx-auto mb-10 flex justify-between items-center pb-6 border-b border-hairline">
+        <div className="flex items-center gap-3">
+          <Seal size={38} />
+          <div>
+            <h1 className="text-2xl font-serif font-semibold text-paper tracking-tight">SmartNotary</h1>
+            <p className="text-muted text-[11px] mt-0.5 uppercase tracking-[0.18em]">Registry of Record · Polygon + IPFS</p>
           </div>
-        )}
-      </div>
-    </header>
-
-    {/* MODE SWITCHER (TABS) */}
-    <div className="flex justify-center gap-4 mb-8">
-      <button 
-        onClick={() => { setMode("notarize"); setFile(null); setFileHash(""); setVerifiedDoc(null); }}
-        className={`px-8 py-2 rounded-full font-bold transition-all ${mode === "notarize" ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
-      >
-        Notarize Mode
-      </button>
-      <button 
-        onClick={() => { setMode("verify"); setFile(null); setFileHash(""); setVerifiedDoc(null); }}
-        className={`px-8 py-2 rounded-full font-bold transition-all ${mode === "verify" ? "bg-green-600 text-white shadow-lg shadow-green-500/20" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
-      >
-        Verify Mode
-      </button>
-    </div>
-
-<main className="max-w-4xl mx-auto">
-  <div className="bg-gray-800 rounded-3xl p-10 border border-gray-700 shadow-2xl">
-    
-    <h2 className="text-2xl mb-8 font-semibold text-center">
-      {mode === "notarize" && "Notarize New Document"}
-      {mode === "verify" && "Verify Document Integrity"}
-    </h2>
-
-    {(
-      <div
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsDragging(false);
-          if (e.dataTransfer.files[0]) {
-            setFile(e.dataTransfer.files[0]);
-            calculateHash(e.dataTransfer.files[0]);
-          }
-        }}
-        className={`border-4 border-dashed rounded-3xl p-16 text-center cursor-pointer transition-all duration-300 ${
-          isDragging ? 'border-blue-500 bg-blue-500/20 scale-102' : 'border-gray-700 hover:border-blue-500/30'
-        }`}
-      >
-        <input 
-            type="file" 
-            id="file-upload" 
-            className="hidden" 
-            onChange={(e) => {
-              if (e.target.files[0]) {
-                setFile(e.target.files[0]);
-                calculateHash(e.target.files[0]);
-              }
-            }} 
-        />
-        <label htmlFor="file-upload" className="cursor-pointer">
-          {file ? (
-            <div>
-              <p className="text-6xl mb-4">📄</p>
-              <p className="text-xl font-bold text-green-400">{file.name}</p>
-              {fileHash && (
-                <div className="mt-4 p-3 bg-gray-900/50 border border-gray-700 rounded-lg text-left">
-                  <p className="text-[10px] text-blue-400 font-mono break-all leading-tight">
-                    <span className="font-bold text-gray-500 block mb-1 uppercase">SHA-256 Fingerprint:</span> 
-                    {fileHash}
-                  </p>
-                </div>
-              )}
-            </div>
+        </div>
+        <div>
+          {!user ? (
+            <button
+              onClick={login}
+              disabled={!isReady}
+              className="bg-gold text-ink px-7 py-2.5 rounded-md font-semibold text-sm tracking-wide hover:bg-[#dcab5e] disabled:bg-panel2 disabled:text-muted transition-colors"
+            >
+              {!isReady ? "Booting…" : "Sign in"}
+            </button>
           ) : (
-            <div className="text-gray-500">
-              <p className="text-6xl mb-4 opacity-20">📤</p>
-              <p className="text-lg">Drag your document here</p>
-              <p className="text-sm italic mt-2">or click to select manually</p>
+            <div className="flex flex-col items-end gap-1 bg-panel border border-hairline px-4 py-2.5 rounded-md">
+              <span className="text-paper text-sm">Welcome, <b className="font-serif">{user.name || "User"}</b></span>
+              <p className="text-[10px] text-teal font-mono tracking-wide">{balance} POL</p>
+              <button onClick={logout} className="text-red text-[10px] uppercase tracking-wide hover:text-[#f08c81]">Sign out</button>
             </div>
           )}
-        </label>
-      </div>
-    )}
-
-    {mode === "verify" && verifiedDoc && verifiedDoc !== "not_found" && (
-      <div className="mt-8 p-6 bg-green-500/10 border border-green-500/50 rounded-2xl animate-in fade-in duration-500">
-        <h3 className="text-green-400 font-bold mb-3 flex items-center gap-2 text-lg">
-          <span>✅ Verified! This document is authentic.</span>
-        </h3>
-        <div className="space-y-2 text-sm text-gray-300">
-          <p><b>Timestamp:</b> {new Date(verifiedDoc.timestamp * 1000).toLocaleString()}</p>
-          <p className="break-all"><b>Notarized By:</b> {verifiedDoc.owner}</p>
-          <a href={`https://gateway.pinata.cloud/ipfs/${verifiedDoc.cid}`} target="_blank" rel="noreferrer" className="inline-block bg-green-600/20 text-green-400 px-4 py-2 rounded-lg mt-2 hover:bg-green-600/30 transition-all border border-green-500/30">
-            👁️ View original file on IPFS
-          </a>
         </div>
+      </header>
+
+      {/* TABS */}
+      <div className="flex justify-center max-w-md mx-auto">
+        <button
+          onClick={() => { setMode("notarize"); setFile(null); setFileHash(""); setVerifiedDoc(null); }}
+          className={`flex-1 py-3 text-sm font-medium tracking-wide rounded-t-lg border-t border-l border-r transition-colors ${
+            mode === "notarize" ? "bg-panel text-paper border-hairline" : "bg-transparent text-muted border-transparent hover:text-paper"
+          }`}
+        >
+          Notarize
+        </button>
+        <button
+          onClick={() => { setMode("verify"); setFile(null); setFileHash(""); setVerifiedDoc(null); }}
+          className={`flex-1 py-3 text-sm font-medium tracking-wide rounded-t-lg border-t border-l border-r transition-colors ${
+            mode === "verify" ? "bg-panel text-paper border-hairline" : "bg-transparent text-muted border-transparent hover:text-paper"
+          }`}
+        >
+          Verify
+        </button>
       </div>
-    )}
 
-    {mode === "verify" && verifiedDoc === "not_found" && (
-      <div className="mt-8 p-6 bg-red-500/10 border border-red-500/50 rounded-2xl">
-        <h3 className="text-red-400 font-bold text-lg">❌ Document Not Found!</h3>
-      </div>
-    )}
+      {/* CARD */}
+      <main className="max-w-4xl mx-auto">
+        <div className="bg-panel rounded-b-2xl rounded-tr-2xl p-10 border border-hairline">
 
+          <h2 className="text-xl mb-8 font-serif text-center text-paper">
+            {mode === "notarize" && "Notarize a new document"}
+            {mode === "verify" && "Verify a document's integrity"}
+          </h2>
 
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              if (e.dataTransfer.files[0]) {
+                setFile(e.dataTransfer.files[0]);
+                calculateHash(e.dataTransfer.files[0]);
+              }
+            }}
+            className={`relative rounded-xl p-14 text-center cursor-pointer transition-all duration-300 border ${
+              isDragging ? "border-gold bg-goldsoft" : "border-dashed border-hairline hover:border-gold/40"
+            }`}
+          >
+            <input
+              type="file"
+              id="file-upload"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files[0]) {
+                  setFile(e.target.files[0]);
+                  calculateHash(e.target.files[0]);
+                }
+              }}
+            />
+            <label htmlFor="file-upload" className="cursor-pointer block">
+              {file ? (
+                <div>
+                  <p className="font-serif text-lg text-paper mb-1">{file.name}</p>
+                  <p className="text-muted text-xs mb-4">
+                      Selected — Ready for {mode === "notarize" ? "Notarization" : "Verification"}
+                  </p>
+                  {fileHash && (
+                    <div className="mt-2 mx-auto max-w-md p-4 bg-ink border border-hairline rounded-lg text-left">
+                      <span className="block text-[10px] text-gold uppercase tracking-[0.18em] mb-2">SHA-256 fingerprint</span>
+                      <p className="text-[11px] text-paper/80 font-mono break-all leading-relaxed">{fileHash}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-muted flex flex-col items-center">
+                  <Seal size={40} tone="gold" />
+                  <p className="text-base text-paper mt-4">Drop document here</p>
+                  <p className="text-xs italic mt-1">or click to select manually</p>
+                </div>
+              )}
+            </label>
+          </div>
 
-    { file && user && (
-      <button 
-        onClick={mode === "notarize" ? handleNotarization : handleVerification}
-        disabled={isUploading}
-        className={`w-full mt-10 text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 text-lg ${
-          isUploading ? 'bg-gray-700 cursor-not-allowed' : 
-          mode === "notarize" ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'
-        }`}
-      >
-        {isUploading ? "Processing..." : mode === "notarize" ? "Finalize & Notarize on Polygon" : "Check Authenticity"}
-      </button>
-    )}
+          {mode === "verify" && verifiedDoc && verifiedDoc !== "not_found" && (
+            <div className="mt-8 p-7 bg-tealsoft border border-teal/40 rounded-xl flex gap-5 items-start">
+              <Seal size={48} tone="teal" />
+              <div className="text-sm text-paper/90 space-y-1.5 pt-1">
+                <p className="font-serif text-teal text-base mb-2">Verified — Document is authentic</p>
+                <p><span className="text-muted">Notarized on:</span> {new Date(verifiedDoc.timestamp * 1000).toLocaleString()}</p>
+                <p className="break-all"><span className="text-muted">Notary:</span> {verifiedDoc.owner}</p>
+                <a
+                  href={`https://gateway.pinata.cloud/ipfs/${verifiedDoc.cid}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block text-teal border border-teal/30 px-3 py-1.5 rounded-md mt-2 hover:bg-teal/10 transition-colors text-xs"
+                >
+                  View original on IPFS ↗
+                </a>
+              </div>
+            </div>
+          )}
 
-  </div>
-</main>
-  </div>
-);
+          {mode === "verify" && verifiedDoc === "not_found" && (
+            <div className="mt-8 p-6 bg-redsoft border border-red/40 rounded-xl flex gap-4 items-center">
+              <Seal size={40} tone="red" />
+              <p className="text-red font-serif text-base">No record found — this document has not been notarized</p>
+            </div>
+          )}
+
+          {file && user && (
+            <button
+              onClick={mode === "notarize" ? handleNotarization : handleVerification}
+              disabled={isUploading}
+              className={`w-full mt-10 py-4 rounded-lg font-medium text-sm tracking-wide transition-all ${
+                isUploading
+                  ? "bg-panel2 text-muted cursor-not-allowed"
+                  : mode === "notarize"
+                  ? "bg-gold text-ink hover:bg-[#dcab5e]"
+                  : "bg-teal text-ink hover:bg-[#5cc7b3]"
+              }`}
+            >
+              {isUploading ? "Processing…" : mode === "notarize" ? "Notarize on Polygon" : "Verify Authenticity"}
+            </button>
+          )}
+        </div>
+      </main>
+    </div>
+  );
 }
 
 export default App;
