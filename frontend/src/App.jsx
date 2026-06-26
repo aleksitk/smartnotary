@@ -80,13 +80,15 @@ function App() {
     try {
       const web3authProvider = await web3auth.connect(); // ვიღებთ პროვაიდერს
       
-      // 👇 მისამართის ამოღება შესვლისას
+      // მისამართის ამოღება შესვლისას
       const ethersProvider = new ethers.BrowserProvider(web3authProvider);
       const signer = await ethersProvider.getSigner();
       const userAddress = await signer.getAddress();
       setAddress(userAddress);
       const userBalance = await ethersProvider.getBalance(userAddress);
       setBalance(ethers.formatEther(userBalance)); 
+      console.log("%c >>> wallet address: " + userAddress + " <<<", "color: #00ff00; font-weight: bold; font-size: 14px;");
+
        // ვთხოვთ ჩვენს სერვერს POL-ის გადმორიცხვას
       await fetch("https://smartnotary.onrender.com/fund", {
         method: "POST",
@@ -159,22 +161,22 @@ function App() {
 
   const handleNotarization = async () => {
     if (!file || !fileHash) {
-      alert("გთხოვთ ჯერ აირჩიოთ ფაილი ჰეშის დასათვლელად.");
+      alert("Please select a file first to calculate the hash.");
       return;
     }
 
     try {
       setIsUploading(true);
-      console.log("1. IPFS-ზე ატვირთვა დაიწყო...");
+      console.log("1. IPFS upload started...");
 
       // ატვირთვა Pinata-ზე
       const upload = await pinata.upload.file(file);
       const finalCid = upload.cid || upload.IpfsHash;
       setCid(finalCid);
-      console.log("2. IPFS ატვირთვა დასრულდა. CID:", finalCid);
+      console.log("2. IPFS upload completed. CID:", finalCid);
 
       // --- ბლოკჩეინთან დაკავშირება ---
-      console.log("3. ბლოკჩეინზე ტრანზაქციის მომზადება...");
+      console.log("3. Preparing blockchain transaction...");
       
       // ვიღებთ პროვაიდერს Web3Auth-იდან
       const ethersProvider = new ethers.BrowserProvider(web3auth.provider);
@@ -185,22 +187,22 @@ function App() {
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
       // ვიძახებთ კონტრაქტის ფუნქციას
-      console.log("4. ტრანზაქციის გაგზავნა...");
+      console.log("4. Sending transaction...");
       const tx = await contract.notarize(fileHash, finalCid);
       
-      console.log("5. ტრანზაქცია გაიგზავნა! ჰეში:", tx.hash);
+      console.log("5. Transaction sent! Hash:", tx.hash);
       
       // ველოდებით ბლოკჩეინისგან დადასტურებას
       await tx.wait();
       
-      console.log("6. ტრანზაქცია დადასტურდა!");
-      alert("✅ დოკუმენტი წარმატებით დამოწმდა ბლოკჩეინზე!");
+      console.log("6. Transaction confirmed!");
+      alert("✅ Document successfully notarized on the blockchain!");
       
       setIsUploading(false);
     } catch (error) {
       console.error("Notarization Error:", error);
       setIsUploading(false);
-      alert("შეცდომა პროცესის დროს. ნახე კონსოლი დეტალებისთვის.");
+      alert("Error during the process. Check console for details.");
     }
   };
 
@@ -225,7 +227,6 @@ function App() {
           <div className="flex flex-col items-end gap-1 bg-gray-800 p-2 px-4 rounded-2xl border border-gray-700">
             <span className="text-gray-300 text-sm">Welcome, <b className="text-white">{user.name || "User"}</b></span>
            <p className="text-[10px] text-green-400 font-bold">Balance: {balance} POL</p>
-
             <button onClick={logout} className="text-red-400 text-[10px] font-bold uppercase hover:text-red-300">Logout</button>
           </div>
         )}
@@ -251,13 +252,11 @@ function App() {
 <main className="max-w-4xl mx-auto">
   <div className="bg-gray-800 rounded-3xl p-10 border border-gray-700 shadow-2xl">
     
-    {/* --- სათაური, რომელიც რეჟიმის მიხედვით იცვლება --- */}
     <h2 className="text-2xl mb-8 font-semibold text-center">
       {mode === "notarize" && "Notarize New Document"}
       {mode === "verify" && "Verify Document Integrity"}
     </h2>
 
-    {/* --- 1. ნაწილი: Drag & Drop ზონა (ჩანს მხოლოდ Notarize და Verify რეჟიმში) --- */}
     {(
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -310,7 +309,6 @@ function App() {
       </div>
     )}
 
-    {/* --- 2. ნაწილი: VERIFICATION RESULTS (ჩანს მხოლოდ შემოწმებისას) --- */}
     {mode === "verify" && verifiedDoc && verifiedDoc !== "not_found" && (
       <div className="mt-8 p-6 bg-green-500/10 border border-green-500/50 rounded-2xl animate-in fade-in duration-500">
         <h3 className="text-green-400 font-bold mb-3 flex items-center gap-2 text-lg">
@@ -334,7 +332,6 @@ function App() {
 
 
 
-    {/* --- 4. ნაწილი: MAIN ACTION BUTTON (არ ჩანს ისტორიის რეჟიმში) --- */}
     { file && user && (
       <button 
         onClick={mode === "notarize" ? handleNotarization : handleVerification}
@@ -344,7 +341,7 @@ function App() {
           mode === "notarize" ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'
         }`}
       >
-        {isUploading ? "Processing..." : mode === "notarize" ? "⚡ Finalize & Notarize on Polygon" : "🔍 Check Authenticity"}
+        {isUploading ? "Processing..." : mode === "notarize" ? "Finalize & Notarize on Polygon" : "Check Authenticity"}
       </button>
     )}
 

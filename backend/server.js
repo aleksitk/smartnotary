@@ -1,7 +1,7 @@
 const express = require("express");
 const { ethers } = require("ethers");
 const cors = require("cors");
-require("dotenv").config({ path: "../.env" }); // ვიყენებთ შენს მთავარ .env-ს
+require("dotenv").config({ path: "../.env" }); 
 
 const app = express();
 app.use(cors());
@@ -20,7 +20,6 @@ app.post("/fund", async (req, res) => {
         const targetBalance = ethers.parseEther("0.12"); 
 
         if (balance < ethers.parseEther("0.08")) {
-            // ვიანგარიშებთ ზუსტ სხვაობას: რა აკლია მიზნობრივ ბალანსამდე
             const amountToSend = targetBalance - balance;
             
             console.log(`User ${userAddress} needs gas.`);
