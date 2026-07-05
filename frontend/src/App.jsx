@@ -37,6 +37,15 @@ function App() {
   pinataJwt: import.meta.env.VITE_PINATA_JWT,
   pinataGateway: "gateway.pinata.cloud",
   });
+  const refreshBalance = async (providerInstance, userAddress) => {
+    try {
+      const ethersProvider = new ethers.BrowserProvider(providerInstance);
+      const userBalance = await ethersProvider.getBalance(userAddress);
+      setBalance(ethers.formatEther(userBalance));
+    } catch (error) {
+      console.error("ბალანსის განახლების შეცდომა:", error);
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -78,6 +87,8 @@ function App() {
           
           const userInfo = await web3authInstance.getUserInfo();
           setUser(userInfo);
+          await refreshBalance(web3authInstance.provider, userAddress);
+
         }
       } catch (error) {
         console.error("Web3Auth ინიციალიზაციის შეცდომა:", error);
@@ -96,8 +107,6 @@ function App() {
       const signer = await ethersProvider.getSigner();
       const userAddress = await signer.getAddress();
       setAddress(userAddress);
-      const userBalance = await ethersProvider.getBalance(userAddress);
-      setBalance(ethers.formatEther(userBalance)); 
       console.log("%c >>> wallet address: " + userAddress + " <<<", "color: #00ff00; font-weight: bold; font-size: 14px;");
 
        // ვთხოვთ ჩვენს სერვერს POL-ის გადმორიცხვას
@@ -106,7 +115,7 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userAddress })
       });
-      
+      await refreshBalance(web3authProvider, userAddress);
       const userInfo = await web3auth.getUserInfo();
       setUser(userInfo);
     } catch (error) {
@@ -208,7 +217,7 @@ function App() {
       
       console.log("6. Transaction confirmed!");
       alert("✅ Document successfully notarized on the blockchain!");
-      
+      await refreshBalance(web3auth.provider, address);
       setIsUploading(false);
     } catch (error) {
       console.error("Notarization Error:", error);
@@ -216,6 +225,7 @@ function App() {
       alert("Error during the process. Check console for details.");
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-ink text-paper p-8 font-sans">
