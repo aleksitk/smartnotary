@@ -25,3 +25,5 @@ contract SmartNotary {
         return (doc.fileHash, doc.ipfsCID, doc.owner, doc.timestamp);
     }
 }
+
+

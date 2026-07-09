@@ -16,10 +16,10 @@ app.post("/fund", async (req, res) => {
     try {
         const balance = await provider.getBalance(userAddress);
         
-        // ჩვენი მიზანია მომხმარებელს ჰქონდეს მინიმუმ 0.12 POL (უსაფრთხოების რეზერვით)
-        const targetBalance = ethers.parseEther("0.12"); 
+        // ჩვენი მიზანია მომხმარებელს ჰქონდეს მინიმუმ 0.08 POL (უსაფრთხოების რეზერვით)
+        const targetBalance = ethers.parseEther("0.08"); 
 
-        if (balance < ethers.parseEther("0.08")) {
+        if (balance < ethers.parseEther("0.04")) {
             const amountToSend = targetBalance - balance;
             
             console.log(`User ${userAddress} needs gas.`);

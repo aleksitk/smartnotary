@@ -208,8 +208,10 @@ function App() {
 
       // ვიძახებთ კონტრაქტის ფუნქციას
       console.log("4. Sending transaction...");
-      const tx = await contract.notarize(fileHash, finalCid);
-      
+      const tx = await contract.notarize(fileHash, finalCid, {
+        maxFeePerGas: ethers.parseUnits("50", "gwei"),
+        maxPriorityFeePerGas: ethers.parseUnits("30", "gwei")
+      });      
       console.log("5. Transaction sent! Hash:", tx.hash);
       
       // ველოდებით ბლოკჩეინისგან დადასტურებას
