@@ -32,6 +32,7 @@ function App() {
   const [mode, setMode] = useState("notarize"); // "notarize" ან "verify"
   const [verifiedDoc, setVerifiedDoc] = useState(null); // შემოწმების შედეგისთვის
   const [balance, setBalance] = useState("");
+  const [txHash, setTxHash] = useState("");
 
   const pinata = new PinataSDK({
   pinataJwt: import.meta.env.VITE_PINATA_JWT,
@@ -218,7 +219,7 @@ function App() {
       await tx.wait();
       
       console.log("6. Transaction confirmed!");
-      alert("✅ Document successfully notarized on the blockchain!");
+      setTxHash(tx.hash);
       await refreshBalance(web3auth.provider, address);
       setIsUploading(false);
     } catch (error) {
@@ -254,6 +255,13 @@ function App() {
             <div className="flex flex-col items-end gap-1 bg-panel border border-hairline px-4 py-2.5 rounded-md">
               <span className="text-paper text-sm">Welcome, <b className="font-serif">{user.name || "User"}</b></span>
               <p className="text-[10px] text-teal font-mono tracking-wide">{balance} POL</p>
+              <a href={`https://amoy.polygonscan.com/address/${address}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] text-muted font-mono hover:text-gold transition-colors"
+                >
+                  {address.slice(0,6)}...{address.slice(-4)}
+                </a>
               <button onClick={logout} className="text-red text-[10px] uppercase tracking-wide hover:text-[#f08c81]">Sign out</button>
             </div>
           )}
@@ -380,6 +388,19 @@ function App() {
               {isUploading ? "Processing…" : mode === "notarize" ? "Notarize on Polygon" : "Verify Authenticity"}
             </button>
           )}
+          {txHash && (
+          <div className="mt-6 p-5 bg-goldsoft border border-gold/30 rounded-xl text-center">
+            <p className="font-serif text-paper mb-3">✅ Document successfully notarized!</p>
+            
+              <a href={`https://amoy.polygonscan.com/tx/${txHash}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-gold border border-gold/30 px-4 py-2 rounded-md hover:bg-gold/10 transition-colors"
+            >
+              View Transaction on PolygonScan ↗
+            </a>
+          </div>
+        )}
         </div>
       </main>
     </div>
